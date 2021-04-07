@@ -7,6 +7,8 @@ const app = express()
 
 connectDB.connectToMongo()
 
+app.use(express.json())
+app.use(cors())
 app.use('/api/users', userRoutes)
 
 module.exports = app

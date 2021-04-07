@@ -6,16 +6,17 @@ const bcrypt = require('bcryptjs')
 const helper = require('./test_helper')
 const User = require('../models/User')
 
-beforeEach(async() => {
-    await User.deleteMany({})
+describe('Simple tests of users', ()=> {
 
-    for (let user of helper.initialUsers) {
-        let userObject = new User(user)
-        await userObject.save()
-    }
-})
+    beforeEach(async() => {
+        await User.deleteMany({})
 
-describe('Testing users', ()=> {
+        for (let user of helper.initialUsers) {
+            let userObject = new User(user)
+            await userObject.save()
+        }
+    })
+
     test('users are returned as json', async () => {
         await api
             .get('/api/users')
@@ -34,6 +35,64 @@ describe('Testing users', ()=> {
 
         const contents = response.body.map(p => p.name)
         expect(contents).toContain('Kate')
+
+    })
+})
+
+describe('when there is initially one user in db', ()=> {
+
+    beforeEach(async() => {
+        await User.deleteMany({})
+
+        const passwordHash = await bcrypt.hash('secret', 10)
+        const user = new User({name: 'Test', email: 'test@example.com', password: passwordHash})
+        await user.save()
+    })
+    test('login return a bearer token', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const response = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        expect(response.body).toContain('Bearer')
+
+    })
+
+    test('when email is wrong there must be error', async () => {
+
+        const user = {
+            email: 'tes@example.com',
+            password: 'secret'
+        }
+
+        const response = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(401)
+
+        expect(response.body.errors[0].msg).toContain('Wrong credentials')
+
+    })
+
+    test('when password is wrong there must be error', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secre'
+        }
+
+        const response = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(401)
+
+        expect(response.body.errors[0].msg).toContain('Wrong credentials')
 
     })
 })
