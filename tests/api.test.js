@@ -95,6 +95,100 @@ describe('when there is initially one user in db', ()=> {
         expect(response.body.errors[0].msg).toContain('Wrong credentials')
 
     })
+
+    test('creation succeeds with a fresh username', async () => {
+
+        const user = {
+            name: 'Test2',
+            email: 'test2@example.com',
+            password: 'secret'
+        }
+
+        const usersAtBegin = await helper.usersInDb()
+        const response = await api
+            .post('/api/users')
+            .send(user)
+            .expect(201)
+        const usersAtEnd = await helper.usersInDb()
+        const userEmails = usersAtEnd.map(u => u.email)
+
+        expect(usersAtEnd).toHaveLength(usersAtBegin.length + 1)
+        expect(userEmails).toContain('test2@example.com')
+    })
+
+    test('creation fails with password shorter than 3 symbols', async () => {
+
+        const user = {
+            name: 'Test2',
+            email: 'test2@example.com',
+            password: 'se'
+        }
+
+        const usersAtBegin = await helper.usersInDb()
+        const response = await api
+            .post('/api/users')
+            .send(user)
+            .expect(400)
+        const usersAtEnd = await helper.usersInDb()
+
+        expect(usersAtEnd).toHaveLength(usersAtBegin.length)
+
+    })
+
+    test('creation fails with email is not being email', async () => {
+
+        const user = {
+            name: 'Test2',
+            email: 'test2',
+            password: 'secret'
+        }
+
+        const usersAtBegin = await helper.usersInDb()
+        const response = await api
+            .post('/api/users')
+            .send(user)
+            .expect(400)
+        const usersAtEnd = await helper.usersInDb()
+
+        expect(usersAtEnd).toHaveLength(usersAtBegin.length)
+
+    })
+
+    test('creation fails if user already exists', async () => {
+
+        const user = {
+            name: 'Test',
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const usersAtBegin = await helper.usersInDb()
+        const response = await api
+            .post('/api/users')
+            .send(user)
+            .expect(400)
+        const usersAtEnd = await helper.usersInDb()
+
+        expect(usersAtEnd).toHaveLength(usersAtBegin.length)
+        expect(response.body.errors[0].msg).toContain('Email уже занят')
+
+    })
+
+    test('creation fails if there s no data', async () => {
+
+        const user = {
+
+        }
+
+        const usersAtBegin = await helper.usersInDb()
+        const response = await api
+            .post('/api/users')
+            .send(user)
+            .expect(400)
+        const usersAtEnd = await helper.usersInDb()
+
+        expect(usersAtEnd).toHaveLength(usersAtBegin.length)
+    })
 })
 
 afterAll(() => {
