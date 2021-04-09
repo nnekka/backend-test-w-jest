@@ -95,6 +95,7 @@ describe('when there is initially one user in db', ()=> {
         expect(response.body.errors[0].msg).toContain('Wrong credentials')
 
     })
+//---------------------------------------register new User begin--------------------------------------------
 
     test('creation succeeds with a fresh username', async () => {
 
@@ -189,6 +190,52 @@ describe('when there is initially one user in db', ()=> {
 
         expect(usersAtEnd).toHaveLength(usersAtBegin.length)
     })
+//---------------------------------------register new User end--------------------------------------------
+//---------------------------------------get User By Token begin------------------------------------------
+
+    test('logged user properly comes from database', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+
+        const response = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const responseAfterLogin = await api
+            .get('/api/users/user')
+            .set({Authorization: response.body})
+            .expect(200)
+
+        expect(responseAfterLogin.body).toMatchObject({'email':'test@example.com', 'name': 'Test'})
+    })
+
+    test('getting of logged user fails when there s no token in headers', async () => {
+
+
+        const response = await api
+            .get('/api/users/user')
+            .expect(401)
+
+
+        expect(response.body.errors[0].msg).toContain('No token in headers')
+    })
+
+    test('getting of logged user fails when there s non valid token in headers', async () => {
+
+
+        const responseAfterLogin = await api
+            .get('/api/users/user')
+            .set({Authorization: 'Bearer 1111111'})
+            .expect(401)
+
+        expect(responseAfterLogin.body.errors[0].msg).toContain('Invalid token')
+    })
+//---------------------------------------get User By Token end------------------------------------------
 })
 
 afterAll(() => {

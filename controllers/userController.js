@@ -51,15 +51,31 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ errors: [{ msg: 'Wrong credentials'}] })
         }
         const token = tokenUtil.generateToken(user._id)
-        res.json(`Bearer ${token}`)
+        res.status(200).json(`Bearer ${token}`)
     }
     catch (e) {
         errorUtil.errorHandler(res, e)
     }
 }
 
+const getUserByToken = async (req, res) => {
+    try {
+
+        const user = await User.findById(req.user.id).select('-password')
+        if (!user){
+            return res.status(404).json({ errors: [{ msg: 'User not found'}] })
+        }
+        res.status(200).json(user)
+    }
+    catch (e) {
+        errorUtil.errorHandler(res, e)
+    }
+}
+
+
 module.exports = {
     getUsers,
     loginUser,
-    registerUser
+    registerUser,
+    getUserByToken
 }
