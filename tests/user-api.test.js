@@ -5,6 +5,8 @@ const api = supertest(app)
 const bcrypt = require('bcryptjs')
 const helper = require('./test_helper')
 const User = require('../models/User')
+const Calendar = require('../models/Calendar')
+const Day = require('../models/Day')
 
 describe('Simple tests of users', ()=> {
 
@@ -193,7 +195,7 @@ describe('when there is initially one user in db', ()=> {
 //---------------------------------------register new User end--------------------------------------------
 //---------------------------------------get User By Token begin------------------------------------------
 
-    test('logged user properly comes from database', async () => {
+    test('getting of logged user succeeds with status 200', async () => {
 
         const user = {
             email: 'test@example.com',
@@ -237,6 +239,7 @@ describe('when there is initially one user in db', ()=> {
     })
 //---------------------------------------get User By Token end------------------------------------------
 })
+
 
 afterAll(() => {
     mongoose.connection.close()
