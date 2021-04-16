@@ -29,6 +29,15 @@ describe('Calendar tests', ()=> {
         })
         await calendar.save()
 
+        const calendar2 = new Calendar({
+            title: 'Test Calendar2',
+            description: 'Test description2',
+            year: 2021,
+            legendType: 'с картинками',
+            user: savedUser.id
+        })
+        await calendar2.save()
+
         // const day = new Day({
         //     day: 1,
         //     month: 1,
@@ -38,7 +47,7 @@ describe('Calendar tests', ()=> {
         // await day.save()
     })
 
-    it.only('getting of all calendars of logged user succeeds with status 200', async () => {
+    it('getting of all calendars of logged user succeeds with status 200', async () => {
 
         const user = {
             email: 'test@example.com',
@@ -56,8 +65,123 @@ describe('Calendar tests', ()=> {
             .set({Authorization: response.body})
             .expect(200)
 
-        expect(responseAfterLogin.body.length).toBe(1)
+        expect(responseAfterLogin.body.length).toBe(2)
         expect(responseAfterLogin.body[0]).toMatchObject({'title':'Test Calendar', 'description': 'Test description'})
+
+    })
+    it('getting of all calendars of logged user fails if there is no valid token', async () => {
+
+
+        const responseAfterLogin = await api
+            .get('/api/calendars')
+            .set({Authorization: 'Bearer 11111'})
+            .expect(401)
+
+    })
+
+    it('getting of calendar by id succeeds with status 200', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const responseLogin = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const responseAllCalendars = await api
+            .get('/api/calendars')
+            .set({Authorization: responseLogin.body})
+            .expect(200)
+
+        const responseCalendarById = await api
+            .get(`/api/calendars/${responseAllCalendars.body[0]._id}`)
+            .set({Authorization: responseLogin.body})
+            .expect(200)
+
+        expect(responseCalendarById.body).toMatchObject({
+            'title':'Test Calendar',
+            'description': 'Test description'
+        })
+
+    })
+
+    it('getting of calendar by id fails if id is not valid', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const responseLogin = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const responseAllCalendars = await api
+            .get('/api/calendars')
+            .set({Authorization: responseLogin.body})
+            .expect(200)
+
+        const responseCalendarById = await api
+            .get(`/api/calendars/4555`)
+            .set({Authorization: responseLogin.body})
+            .expect(400)
+
+        expect(responseCalendarById.body.errors[0].msg).toContain('Id is not valid')
+
+    })
+
+    it('getting of calendar by id fails if there is no token in headers', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const responseLogin = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const responseAllCalendars = await api
+            .get('/api/calendars')
+            .set({Authorization: responseLogin.body})
+            .expect(200)
+
+        const responseCalendarById = await api
+            .get(`/api/calendars/${responseAllCalendars.body[0]._id}`)
+            .expect(401)
+
+        expect(responseCalendarById.body.errors[0].msg).toContain('No token in headers')
+
+    })
+
+    it('getting of calendar by id fails if there is invalid token in headers', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const responseLogin = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const responseAllCalendars = await api
+            .get('/api/calendars')
+            .set({Authorization: responseLogin.body})
+            .expect(200)
+
+        const responseCalendarById = await api
+            .get(`/api/calendars/${responseAllCalendars.body[0]._id}`)
+            .set({Authorization: 'Bearer 111'})
+            .expect(401)
+
+        expect(responseCalendarById.body.errors[0].msg).toContain('Invalid token')
 
     })
 

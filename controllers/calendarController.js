@@ -15,12 +15,15 @@ const getCalendarsOfUser = async (req, res) => {
 const getCalendarById = async (req, res) => {
 
     try {
-        const calendar = await Calendar.findById(req.params.id).populate('days')
-        if (!calendar) {
-            return res.status(404).json({errors: [{msg: 'Calendar not found'}]})
+        if (req.params.id.match(/^[0-9a-fA-F]{24}$/)){
+            const calendar = await Calendar.findById(req.params.id).populate('days')
+            if (!calendar ) {
+                return res.status(404).json({errors: [{msg: 'Calendar not found'}]})
+            }
+            res.status(200).json(calendar)
+        } else {
+            return res.status(400).json({ errors: [{msg: 'Id is not valid'}] })
         }
-
-        res.json(calendar)
     }
     catch (e) {
         errorUtil.errorHandler(res, e)
