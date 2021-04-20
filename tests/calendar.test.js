@@ -146,6 +146,8 @@ describe('Calendar tests', ()=> {
             .send(user)
             .expect(200)
 
+
+
         const responseAllCalendars = await api
             .get('/api/calendars')
             .set({Authorization: responseLogin.body})
@@ -184,6 +186,184 @@ describe('Calendar tests', ()=> {
         expect(responseCalendarById.body.errors[0].msg).toContain('Invalid token')
 
     })
+
+    it('creation of new calendar succeeds when token is valid', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const calendarsBefore = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtStart = calendarsBefore.body
+
+        const calendar = {
+            title: 'New calendar',
+            year: 2021,
+            description: 'New calendar description',
+            legendType: 'цветная',
+        }
+
+        const creation = await api
+            .post('/api/calendars')
+            .set({Authorization: auth.body})
+            .send(calendar)
+            .expect(200)
+
+        const calendarsAfter = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtEnd = calendarsAfter.body
+
+        expect(calendarsAtEnd).toHaveLength(calendarsAtStart.length + 1)
+        expect(creation.body).toMatchObject({
+            'title':'New calendar',
+            'description': 'New calendar description'
+        })
+    })
+
+    it('creation of new calendar fails when token is invalid', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const calendarsBefore = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtStart = calendarsBefore.body
+
+        const calendar = {
+            title: 'New calendar',
+            year: 2021,
+            description: 'New calendar description',
+            legendType: 'цветная',
+        }
+
+        const creation = await api
+            .post('/api/calendars')
+            .set({Authorization: 'Bearer 1111'})
+            .send(calendar)
+            .expect(401)
+
+        const calendarsAfter = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtEnd = calendarsAfter.body
+
+        expect(calendarsAtEnd).toHaveLength(calendarsAtStart.length)
+        expect(creation.body.errors[0].msg).toContain('Invalid token')
+
+    })
+
+    it('creation of new calendar fails when there is no token in headers', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const calendarsBefore = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtStart = calendarsBefore.body
+
+        const calendar = {
+            title: 'New calendar',
+            year: 2021,
+            description: 'New calendar description',
+            legendType: 'цветная',
+        }
+
+        const creation = await api
+            .post('/api/calendars')
+            .send(calendar)
+            .expect(401)
+
+        const calendarsAfter = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtEnd = calendarsAfter.body
+
+        expect(calendarsAtEnd).toHaveLength(calendarsAtStart.length)
+        expect(creation.body.errors[0].msg).toContain('No token in headers')
+
+    })
+
+
+    it('creation of new calendar fails when data is not valid', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const calendarsBefore = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtStart = calendarsBefore.body
+
+        const calendar = {
+            description: 'New calendar description',
+        }
+
+        const creation = await api
+            .post('/api/calendars')
+            .set({Authorization: auth.body})
+            .send(calendar)
+            .expect(400)
+
+        const calendarsAfter = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        const calendarsAtEnd = calendarsAfter.body
+        const errorsMsg = creation.body.errors.map(err => err.msg)
+
+        expect(calendarsAtEnd).toHaveLength(calendarsAtStart.length)
+        expect(errorsMsg).toContain('Title is required')
+        expect(errorsMsg).toContain('Year is required')
+        expect(errorsMsg).toContain('Legend type is required')
+    })
+
 
 })
 

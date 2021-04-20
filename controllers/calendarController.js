@@ -1,5 +1,7 @@
 const Calendar = require('../models/Calendar')
+const User = require('../models/User')
 const errorUtil = require('../utils/errorHandler')
+const {validationResult} = require('express-validator')
 
 // GET /api/calendars
 // Получить все календари юзера
@@ -34,6 +36,11 @@ const getCalendarById = async (req, res) => {
 // Создать календарь
 
 const createCalendar = async (req, res) => {
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array()})
+    }
     try {
         const user = await User.findById(req.user.id)
         const existCalendar = await Calendar.findOne({
@@ -55,7 +62,7 @@ const createCalendar = async (req, res) => {
         })
 
         await calendar.save()
-        res.json(calendar)
+        res.status(200).json(calendar)
     }
     catch (e) {
         errorUtil.errorHandler(res, e)
