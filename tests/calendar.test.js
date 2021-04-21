@@ -364,6 +364,108 @@ describe('Calendar tests', ()=> {
         expect(errorsMsg).toContain('Legend type is required')
     })
 
+    it('adding legend succeeds when token is valid and data is color', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const legend = {
+            color: 'red',
+            text: 'red'
+        }
+
+        const calendarsOfLoggedUser = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+        console.log((calendarsOfLoggedUser.body[0]))
+
+        const addingLegend = await api
+            .put(`/api/calendars/${calendarsOfLoggedUser.body[0]._id}/legend`)
+            .set({Authorization: auth.body})
+            .send(legend)
+            .expect(200)
+
+
+        expect(addingLegend.body.legends[0]).toMatchObject({
+            'color': 'red',
+            'text': 'red',
+            'imageSrc': 'No image'
+        })
+    })
+
+    it('adding legend succeeds when token is valid and data is image', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const legend = {
+            imageSrc: '/uploads/pic.jpg',
+            text: 'pic'
+        }
+
+        const calendarsOfLoggedUser = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+
+        const addingLegend = await api
+            .put(`/api/calendars/${calendarsOfLoggedUser.body[0]._id}/legend`)
+            .set({Authorization: auth.body})
+            .send(legend)
+            .expect(200)
+
+        expect(addingLegend.body.legends[0]).toMatchObject({
+            'color': 'No color',
+            'text': 'pic',
+            'imageSrc': '/uploads/pic.jpg'
+        })
+    })
+
+    it('adding legend fails when there is no data in request', async () => {
+
+        const user = {
+            email: 'test@example.com',
+            password: 'secret'
+        }
+
+        const auth = await api
+            .post('/api/users/login')
+            .send(user)
+            .expect(200)
+
+        const legend = {}
+
+        const calendarsOfLoggedUser = await api
+            .get('/api/calendars')
+            .set({Authorization: auth.body})
+            .expect(200)
+
+
+        const addingLegend = await api
+            .put(`/api/calendars/${calendarsOfLoggedUser.body[0]._id}/legend`)
+            .set({Authorization: auth.body})
+            .send(legend)
+            .expect(400)
+
+        expect(addingLegend.body.errors[0].msg).toContain('Выберите цвет или картинку')
+    })
 
 })
 

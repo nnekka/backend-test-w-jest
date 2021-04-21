@@ -13,7 +13,7 @@ router.route('/').post( [
     check('year', 'Year is required').not().isEmpty(),
     check('legendType', 'Legend type is required').not().isEmpty()
 ], middleware.getTokenFromRequest, calendarController.createCalendar)
-// router.route('/:id/legend').put(passport.authenticate('jwt', { session: false }), addLegend)
+router.route('/:id/legend').put(middleware.getTokenFromRequest, calendarController.addLegend)
 // router.route('/:id/day').put(passport.authenticate('jwt', { session: false }), addDay)
 // router.route('/:id').delete(passport.authenticate('jwt', { session: false }), deleteCalendar)
 // router.route('/:id/legend/:legend_id').delete(passport.authenticate('jwt', { session: false }), deleteLegend)

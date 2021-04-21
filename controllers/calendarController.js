@@ -69,8 +69,42 @@ const createCalendar = async (req, res) => {
     }
 }
 
+// PUT /api/calendars/:id/legend
+// (тут проблема: как проверить картинку? )
+
+const addLegend = async (req, res) => {
+    try {
+        const {color, text, imageSrc} = req.body
+
+        const calendar = await Calendar.findById(req.params.id)
+        if (!calendar){
+            return res.status(404).json({errors: [{ msg: 'Calendar not found'}] })
+        }
+        const existLegendColor = calendar.legends.find(x => x.color === color)
+        if (existLegendColor && existLegendColor !== 'No color'){
+            return res.status(400).json({errors: [{ msg: 'Color is already exists'}] })
+        }
+        if(!color && !imageSrc){
+            return res.status(400).json({errors: [{ msg: 'Выберите цвет или картинку'}]})
+        }
+
+        const legend = {
+            color,
+            text,
+            imageSrc
+        }
+        calendar.legends = calendar.legends.concat(legend)
+        await calendar.save()
+        res.status(200).json(calendar)
+    }
+    catch (e) {
+        errorUtil.errorHandler(res, e)
+    }
+}
+
 module.exports = {
     getCalendarById,
     getCalendarsOfUser,
-    createCalendar
+    createCalendar,
+    addLegend
 }
